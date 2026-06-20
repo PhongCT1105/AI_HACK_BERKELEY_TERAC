@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python
+backend/.venv/
+**/__pycache__/
+*.pyc
+
+# Env / secrets
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Misc
+.DS_Store
+*.log
+
+# Skill source repos are kept locally for reference but not committed.
+# Remove this line if you DO want them in version control.
+.claude/skill-sources/
