@@ -21,6 +21,11 @@ frontend/out/
 .DS_Store
 *.log
 
+# Generated Fin-Fact derivatives. The hidden-label file must never be published.
+data/sourceguard_terac_tasks.jsonl
+data/sourceguard_terac_tasks.csv
+data/hidden_original_labels.csv
+
 # Skill source repos are kept locally for reference but not committed.
 # Remove this line if you DO want them in version control.
 .claude/skill-sources/
