@@ -1,4 +1,4 @@
--- SourceGuard Labeling Arena — Supabase schema
+-- Captain America Labeling Arena — Supabase schema
 -- Run this in the Supabase SQL editor (or `supabase db push`) before seeding.
 
 create extension if not exists "pgcrypto";
@@ -77,8 +77,11 @@ create table if not exists source_claim_tasks (
   evidence_url text,
   image_url text,
   capsule text,
+  evidence_text_clean text,
   created_at timestamp with time zone default now()
 );
+
+alter table source_claim_tasks add column if not exists evidence_text_clean text;
 
 create table if not exists claim_annotations (
   id uuid primary key default gen_random_uuid(),
@@ -94,3 +97,16 @@ create table if not exists claim_annotations (
 create index if not exists idx_claim_annotations_task_id on claim_annotations(task_id);
 alter table source_claim_tasks enable row level security;
 alter table claim_annotations enable row level security;
+
+-- Simplified Terac flow: claim + evidence_text_clean -> can_ai_cite (yes/no), optional reason.
+create table if not exists simple_claim_annotations (
+  id uuid primary key default gen_random_uuid(),
+  task_id text not null references source_claim_tasks(task_id) on delete cascade,
+  can_ai_cite text not null check (can_ai_cite in ('yes', 'no')),
+  reason text,
+  annotator_session_id text,
+  created_at timestamp with time zone default now()
+);
+
+create index if not exists idx_simple_claim_annotations_task_id on simple_claim_annotations(task_id);
+alter table simple_claim_annotations enable row level security;

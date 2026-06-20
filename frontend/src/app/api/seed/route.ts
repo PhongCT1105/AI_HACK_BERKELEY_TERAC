@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAuthorizedAdmin } from "@/lib/admin-auth";
 import { buildSeedPairs } from "@/lib/seed-data";
 
+// Optional future source-pair seed route. The primary Fin-Fact MVP uses the
+// root-level seed_terac_tasks_to_supabase.ts script instead.
 export async function POST(req: NextRequest) {
   let bodyPassword: string | undefined;
   try {

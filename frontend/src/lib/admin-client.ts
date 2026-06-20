@@ -1,4 +1,4 @@
-const STORAGE_KEY = "sourceguard_admin_password";
+const STORAGE_KEY = "captain_america_admin_password";
 
 export function getStoredAdminPassword(): string | null {
   if (typeof window === "undefined") return null;

@@ -55,7 +55,7 @@ export function AnnotateClient() {
     setError(null);
     setForm(emptyFormState());
     try {
-      const res = await fetch("/api/task", { cache: "no-store" });
+      const res = await fetch("/api/pairs/task", { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load a source pair.");
       setTask(data);
@@ -100,7 +100,7 @@ export function AnnotateClient() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const res = await fetch("/api/submit", {
+      const res = await fetch("/api/pairs/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

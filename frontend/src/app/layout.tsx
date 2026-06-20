@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SourceGuard Labeling Arena",
+  title: "Captain America Labeling Arena",
   description:
     "Human preference labeling for AI agent source credibility — built for Terac annotators.",
 };

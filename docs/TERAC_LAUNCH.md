@@ -1,4 +1,4 @@
-# Launch SourceGuard Finance on Terac
+# Launch Captain America Finance on Terac
 
 This workspace does not have Terac MCP tools configured, so it cannot launch an
 opportunity directly. The app exposes a prepared payload at
@@ -6,7 +6,7 @@ opportunity directly. The app exposes a prepared payload at
 
 Use the following opportunity settings when Terac MCP is connected:
 
-- Title: **SourceGuard Finance Claim Credibility Labeling**
+- Title: **Captain America Finance Claim Credibility Labeling**
 - Audience: general population
 - Estimated time: 45-90 seconds per item
 - Desired labels per task: 3

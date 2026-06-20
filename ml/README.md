@@ -1,66 +1,34 @@
-# Using the exported Terac labels
+# Training from Fin-Fact claim-verification labels
 
-`/api/export` (or `frontend/scripts/export-training.ts`) produces a CSV with
-one row per annotation, joined against its source pair's features and the
-deterministic machine baseline score. Columns:
+`/api/export` produces one row per fresh Terac annotation joined to its blind
+Fin-Fact-derived claim task. It contains task context plus:
 
-```
-pair_id, research_task, source_a_id, source_b_id, source_a_url, source_b_url,
-source_a_title, source_b_title, source_a_capsule, source_b_capsule,
-source_a_features_json, source_b_features_json, machine_preferred_source,
-machine_score_a, machine_score_b, human_preferred_source,
-source_a_would_cite, source_b_would_cite, selected_risk_tags, reason, created_at
+```text
+task_id, claim, author, posted_date, source, evidence_text, evidence_url,
+capsule, human_verdict, would_ai_cite, risk_tags, reason
 ```
 
-`*_features_json` contains the structured fields the baseline scorer used:
-`source_type`, `author_transparency`, `citation_quality`, `evidence_quality`,
-`commercial_pressure`, `risk_tags`.
+Original Fin-Fact labels and justifications are intentionally absent. Do not
+use `data/hidden_original_labels.csv` for this model or evaluation.
 
-## Recommended workflow
+## Held-out workflow
 
-1. **Split by `pair_id`, not by row.** Each pair has multiple annotations
-   (target: 3 per pair from Terac). Group rows by `pair_id` before splitting
-   train/test so the same pair never appears in both sets.
+1. Group exported rows by `task_id` and create majority labels for
+   `human_verdict` and `would_ai_cite`. Keep the task entirely in one split.
+2. Split tasks into train and held-out sets before selecting model features or
+   hyperparameters.
+3. Run the deterministic base claim-citation model on the held-out tasks.
+4. Train a claim-citation classifier from the training tasks using public claim
+   context, evidence text, source metadata, capsule, and optionally risk tags.
+5. Run the trained model on the identical held-out tasks. Report verdict and
+   cite/avoid metrics side by side with the base model.
 
-2. **Take the majority vote as the human label.** For each `pair_id`, compute
-   the mode of `human_preferred_source` across its annotations. Drop pairs
-   without a clear majority among `source_a` / `source_b` (i.e. exclude
-   `both_similar` / `neither` from this binary comparison, or model them as a
-   separate class if you have enough data).
+Useful metrics include held-out verdict accuracy or macro-F1, cite/avoid
+precision and recall, and citation-decision agreement. Report an improvement
+only when both models use the same held-out Terac-label split.
 
-3. **Compute the baseline accuracy first.**
-   ```
-   base_human_agreement = mean(majority_human_label == machine_preferred_source)
-   ```
-   This number is also surfaced live at `/admin/eval` — it's the bar a trained
-   model has to beat.
+## Optional future: source-pair model
 
-4. **Train a small classifier.**
-   - Features: `source_a_features_json` / `source_b_features_json` structured
-     fields (one-hot or ordinal encode `source_type`, `author_transparency`,
-     `citation_quality`, `evidence_quality`, `commercial_pressure`; multi-hot
-     encode `risk_tags`), plus optionally a text embedding of
-     `source_a_capsule` / `source_b_capsule`.
-   - Label: majority `human_preferred_source` (binary: source_a vs source_b).
-   - Model: logistic regression as a baseline; XGBoost if you have enough rows
-     to justify it.
-   - A natural framing is **pairwise**: feed `features(A) - features(B)` (and
-     the reverse pair with flipped label) so the model learns a relative
-     preference rather than an absolute score.
-
-5. **Evaluate on the held-out test split.**
-   ```
-   trained_model_human_agreement = mean(model_prediction == majority_human_label)
-   ```
-   Compare directly against `base_human_agreement` from step 3. Report both
-   numbers together — improvement is only meaningful relative to the baseline,
-   on the same held-out pairs.
-
-## Caveats
-
-- The seeded dataset is intentionally lopsided (clear official/SEC sources vs.
-  clear promotional/hype sources) so the baseline scorer and early annotators
-  have unambiguous signal. Expect the trained model's real advantage to show
-  up once more ambiguous, real-world source pairs are added.
-- Don't claim an improvement without this held-out comparison — see
-  `AGENTS.md`.
+The repository retains a source-pair experiment for later Browserbase work.
+That experiment is separate from the current Fin-Fact claim-verification MVP
+and must not be mixed into its training or evaluation results.

@@ -11,7 +11,7 @@ export default function AdminSeedPage() {
           ← Back to admin
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-          Seed sample data
+          Optional future: seed source-pair samples
         </h1>
       </div>
       <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>

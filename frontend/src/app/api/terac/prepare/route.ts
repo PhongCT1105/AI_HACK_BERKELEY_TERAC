@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   const opportunityPayload = {
-    task_title: "SourceGuard Finance Claim Credibility Labeling",
+    task_title: "Captain America Finance Claim Credibility Labeling",
     audience: "general population",
     task_type: "financial claim credibility annotation",
     estimated_time_seconds: { min: 45, max: 90 },

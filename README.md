@@ -1,121 +1,69 @@
-# SourceGuard Labeling Arena
+# Captain America Finance: Fin-Fact Claim Verification
 
-A Vercel-deployable annotation platform for Terac annotators to label source
-credibility for an AI agent (SourceGuard — a credibility firewall for AI
-agents, focused on finance / investment / crypto sources first).
+Captain America is a Terac annotation MVP for financial claim credibility. The
+primary flow is a blind, single-claim verification task:
 
-Two annotation flows live side by side in the same app:
+1. Start with Fin-Fact financial misinformation examples.
+2. Keep the original labels and justifications in the local, admin-only
+   `data/hidden_original_labels.csv` file.
+3. Publish only unlabeled claim tasks to `source_claim_tasks`.
+4. Send annotators to `/annotate` through the Terac opportunity.
+5. Store fresh labels in `claim_annotations`: verdict, AI citation decision,
+   risk tags, and a reason.
+6. Export the joined task-and-label CSV and evaluate a base and Terac-trained
+   claim-citation model on the same held-out task split.
 
-- **`/annotate/pairs`** — compare two candidate sources for one research
-  task and decide which one an AI agent should trust/cite. This is the
-  flow described below and the one wired into `/admin`, `/admin/seed`,
-  `/admin/eval`, and `/api/export`.
-- **`/annotate`** — single-claim credibility labeling (judge one financial
-  claim/source at a time). See its own routes (`/api/claim-task`,
-  `/api/claim-submit`) and `docs/TERAC_LAUNCH.md`.
+Do not seed, show, export, or train on the original Fin-Fact labels.
 
-## Layout
+## Primary routes
 
-```
-AI_Hack_Berkeley/
-├── frontend/                         # Next.js 16 (App Router, TS, Tailwind v4, shadcn/ui)
-│   └── src/
-│       ├── app/
-│       │   ├── page.tsx              # landing page
-│       │   ├── annotate/             # single-claim flow (page.tsx + pairs/ subflow)
-│       │   │   └── pairs/            # source-pair comparison flow
-│       │   ├── admin/                # password-gated dashboard, /seed, /eval
-│       │   └── api/
-│       │       ├── task/ submit/ results/ export/ seed/   # source-pair API
-│       │       ├── claim-task/ claim-submit/               # single-claim API
-│       │       └── terac/prepare(-pairs)/                  # Terac launch payloads
-│       ├── components/ui/            # shadcn components
-│       └── lib/                      # types, scoring baseline, seed data, supabase client
-├── supabase/schema.sql               # source_pairs/annotations + source_claim_tasks/claim_annotations
-├── ml/README.md                      # how to use the CSV export to train/evaluate a model
-├── docs/TERAC_LAUNCH.md              # Terac launch guide (single-claim flow)
-├── docs/TERAC_LAUNCH_PAIRS.md        # Terac launch guide (source-pair flow)
-└── backend/                          # FastAPI scaffold (unused by this app; kept from starter)
-```
+- `/annotate` loads one least-labeled `source_claim_tasks` record through
+  `GET /api/task` and writes to `claim_annotations` through `POST /api/submit`.
+- `/admin` shows Fin-Fact task coverage, fresh Terac label counts, verdict and
+  citation distributions, and current majority labels.
+- `/api/export?password=<ADMIN_PASSWORD>` exports each claim task joined to
+  every Terac annotation.
+- `POST /api/terac/prepare` returns the claim-verification opportunity payload.
 
-## Run it
+`/api/claim-task` and `/api/claim-submit` remain compatibility aliases for the
+same primary API.
+
+## Setup
 
 ```bash
 cd frontend
-cp .env.local.example .env.local   # fill in Supabase + ADMIN_PASSWORD
 npm install
+cp .env.local.example .env.local
 npm run dev
 ```
 
-Visit `http://localhost:3000`.
+Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, and `NEXT_PUBLIC_APP_URL` in
+`frontend/.env.local`. Run [supabase/schema.sql](supabase/schema.sql) in the
+Supabase SQL editor before seeding.
 
-## Deploying
+## Prepare and seed Fin-Fact tasks
 
-1. **Create a Supabase project.**
-2. **Run the schema**: paste `supabase/schema.sql` into the Supabase SQL
-   editor (or `supabase db push`).
-3. **Add environment variables** to Vercel (and `frontend/.env.local` for
-   local dev):
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=
-   SUPABASE_SERVICE_ROLE_KEY=
-   ADMIN_PASSWORD=
-   NEXT_PUBLIC_APP_URL=
-   ```
-   The service role key is server-only — it's read by API routes via
-   `frontend/src/lib/supabase/server.ts` and never sent to the browser.
-4. **Deploy** the `frontend/` directory as the Next.js project root on
-   Vercel.
-5. **Seed data**: visit `/admin/seed` (enter the admin password) and click
-   "Seed sample data" — inserts ~34 placeholder finance/crypto source pairs.
-6. **Send the annotation URL to Terac**: `https://<deployment>/annotate/pairs`
-   for the source-pair flow (see `docs/TERAC_LAUNCH_PAIRS.md`), or
-   `https://<deployment>/annotate` for the single-claim flow (see
-   `docs/TERAC_LAUNCH.md`).
-7. **Export labels**: `/admin` → "Export CSV", or
-   `GET /api/export?password=<ADMIN_PASSWORD>`.
-
-## Admin dashboard
-
-`/admin` (password-gated via `ADMIN_PASSWORD`, as a form or `?password=`
-query param) shows total source pairs, total annotations, annotations per
-pair, human-preferred-source distribution, cite yes/no/caution counts, and
-machine-vs-human agreement. `/admin/eval` isolates the
-`base_human_agreement` metric (heuristic baseline vs. human majority vote)
-with instructions for comparing a future trained model against it.
-
-## Machine baseline
-
-`frontend/src/lib/scoring.ts` implements the deterministic scorer used to
-pre-score every seeded source pair (start at 50; ±weights for source type,
-author transparency, citation/evidence quality, promotional language,
-unsupported price predictions, affiliate pressure, missing author, weak
-citations; clamped 0–100). Annotators never see this score or the machine's
-preferred source — `/api/task` strips it before responding — so human labels
-stay unbiased. It's only shown in `/admin`.
-
-## Agent knowledge (background context)
-
-The project originated from **AgentShield**, a credibility layer agents call
-before using a web source. See [AGENTS.md](AGENTS.md) and the
-[AgentShield knowledge base](docs/agent-knowledge.md) for the MVP definition,
-API contract, and demo constraints that informed this build.
-
-## Claude Code integration
-
-### MCP servers (`.mcp.json`)
-| Server | Purpose | Needs key? |
-|--------|---------|-----------|
-| `shadcn` | Browse/install shadcn/ui components via the registry | No |
-| `magic`  | 21st.dev Magic — generate UI components from prompts (`/ui ...`) | Yes — set `MAGIC_21ST_API_KEY` |
-
-To enable Magic: copy `.env.example` → `.env`, add your key from
-https://21st.dev/magic/console, then restart Claude Code and run `/mcp`.
-
-### Terac MCP
 ```bash
-claude mcp add --transport http terac https://terac.com/api/mcp
+python3 scripts/prepare_finfact_for_terac.py --input /tmp/Fin-Fact/finfact.json --limit 200
+npx tsx scripts/seed_terac_tasks_to_supabase.ts
 ```
-Run `/mcp` to authenticate. See `docs/TERAC_LAUNCH_PAIRS.md` /
-`docs/TERAC_LAUNCH.md` for the full launch flow (quote → review → launch).
+
+The seed script loads `frontend/.env.local` when present and upserts only the
+public task fields. See [docs/SUPABASE_DEPLOYMENT.md](docs/SUPABASE_DEPLOYMENT.md)
+for details and [docs/TERAC_LAUNCH.md](docs/TERAC_LAUNCH.md) for the Terac
+opportunity setup.
+
+## Held-out evaluation
+
+Use `/api/export` after collecting fresh Terac labels. Group labels by
+`task_id`, take majority labels, split tasks before model selection, and compare
+the base model with the Terac-trained model on the same held-out split. Do not
+claim improvement until that comparison exists. See [ml/README.md](ml/README.md).
+
+## Optional future: source-pair and Browserbase flow
+
+`/annotate/pairs`, `source_pairs`, and the related pair APIs are retained as an
+optional future Browserbase-oriented source comparison experiment. They are not
+part of the current Fin-Fact Terac MVP, seed flow, admin dashboard, export, or
+evaluation claim.

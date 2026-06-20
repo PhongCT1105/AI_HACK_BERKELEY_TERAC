@@ -6,31 +6,28 @@ export default function Home() {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
       <main className="mx-auto flex max-w-3xl flex-1 flex-col items-start justify-center gap-8 px-6 py-24">
         <span className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium tracking-wide text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-          SourceGuard · Credibility firewall for AI agents
+          Captain America · Credibility firewall for AI agents
         </span>
 
         <h1 className="text-4xl font-semibold leading-tight tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-5xl">
-          SourceGuard Labeling Arena
+          Captain America Fin-Fact Claim Verification
         </h1>
 
         <p className="max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Before an AI agent cites a web source for finance, investment, or crypto research, it
-          should know whether that source is trustworthy. We collect human preference labels —
-          comparing pairs of sources for a research task — to train and evaluate that judgment.
+          Before an AI agent cites a financial claim, it should know whether the claim and its
+          visible source evidence are credible enough to use. We collect fresh human labels on
+          blind Fin-Fact-derived claims to train and evaluate that judgment.
         </p>
 
         <p className="max-w-xl text-base leading-7 text-zinc-500 dark:text-zinc-500">
-          Annotators review a research task and two candidate sources, then decide which one an
-          AI agent should trust or cite. Labels are stored in Supabase, exported as training
-          data, and benchmarked against a deterministic machine baseline.
+          Original Fin-Fact labels and justifications stay hidden from annotators. Terac labels
+          are stored in Supabase, exported as training data, and used for a held-out
+          claim-citation evaluation.
         </p>
 
         <div className="flex flex-col gap-4 pt-2 sm:flex-row">
-          <Button render={<Link href="/annotate/pairs" />} size="lg">
-            Compare two sources →
-          </Button>
-          <Button render={<Link href="/annotate" />} size="lg" variant="outline">
-            Label a single claim
+          <Button render={<Link href="/annotate" />} size="lg">
+            Verify a financial claim →
           </Button>
           <Button render={<Link href="/admin" />} size="lg" variant="outline">
             Admin dashboard
@@ -38,9 +35,9 @@ export default function Home() {
         </div>
 
         <div className="grid w-full gap-4 pt-12 sm:grid-cols-3">
-          <Card title="1. Compare" body="See a research task and two sources side-by-side, each with a credibility capsule." />
-          <Card title="2. Judge" body="Choose which source an agent should trust, and whether each is safe to cite." />
-          <Card title="3. Train" body="Labels export as CSV to benchmark and improve the machine credibility baseline." />
+          <Card title="1. Review" body="See a blind financial claim, its visible context, and a neutral capsule." />
+          <Card title="2. Judge" body="Label support, whether an AI may cite it, risks, and a concise reason." />
+          <Card title="3. Evaluate" body="Export fresh Terac labels for a held-out claim-citation model comparison." />
         </div>
       </main>
     </div>

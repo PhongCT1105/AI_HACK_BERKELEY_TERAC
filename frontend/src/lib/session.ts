@@ -1,4 +1,4 @@
-const SESSION_KEY = "sourceguard_annotator_session_id";
+const SESSION_KEY = "captain_america_annotator_session_id";
 
 export function getAnnotatorSessionId(): string {
   if (typeof window === "undefined") return "";

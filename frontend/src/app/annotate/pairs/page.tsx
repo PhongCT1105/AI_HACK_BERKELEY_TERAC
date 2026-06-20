@@ -12,7 +12,7 @@ export default function AnnotatePairsPage() {
           </Link>
         </p>
         <h1 className="mt-2 text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-          SourceGuard Labeling Arena — Source Pairs
+          Optional future — Source-pair comparison
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
           You are helping train an AI agent to choose trustworthy financial sources. Given a

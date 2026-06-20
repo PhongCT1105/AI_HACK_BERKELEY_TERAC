@@ -1,6 +1,6 @@
-# Launching the source-pair comparison Terac opportunity
+# Optional future: source-pair comparison Terac opportunity
 
-This is the source-pair-comparison annotation flow at `/annotate/pairs`
+This optional future Browserbase-oriented flow is the source-pair-comparison annotation flow at `/annotate/pairs`
 (compare two web sources for one research task). A separate single-claim
 flow lives at `/annotate` — see `docs/TERAC_LAUNCH.md` for that one.
 
@@ -34,7 +34,7 @@ the app stores labels in Supabase regardless of how the opportunity launched.
 3. Review the quote. Only call `terac_launch_opportunity` after confirming it
    fits the budget.
 4. Poll `terac_get_submissions`, or just check `/admin` — annotators write
-   directly to Supabase via `/api/submit`.
+   directly to Supabase via `/api/pairs/submit`.
 
 `POST /api/terac/prepare-pairs` (with the admin password) returns a ready-made
 JSON payload for the quote request.
