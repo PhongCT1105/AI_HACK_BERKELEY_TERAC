@@ -4,15 +4,55 @@ import { cleanEvidenceText } from "@/lib/evidence";
 
 export const TARGET_LABELS_PER_TASK = Number(process.env.TARGET_LABELS_PER_TASK) || 3;
 
-// Simplified Terac flow: serve one random claim/evidence task, preferring tasks
-// under the per-task label target and tasks this annotator session hasn't seen yet.
+type ClaimTask = {
+  task_id: string;
+  claim: string;
+  evidence_text: string | null;
+  evidence_text_clean: string | null;
+  evidence_url: string | null;
+  posted_date: string | null;
+};
+
+const UNDATED_GROUP = "undated";
+
+function dateGroup(postedDate: string | null): string {
+  const value = postedDate?.trim();
+  if (!value) return UNDATED_GROUP;
+
+  // Preserve the calendar day embedded in ISO-like values without applying the
+  // server timezone. Other parseable date strings are normalized to UTC.
+  const isoMatch = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return UNDATED_GROUP;
+
+  return [
+    parsed.getUTCFullYear(),
+    String(parsed.getUTCMonth() + 1).padStart(2, "0"),
+    String(parsed.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function compareDateGroups(left: string, right: string): number {
+  if (left === UNDATED_GROUP) return right === UNDATED_GROUP ? 0 : 1;
+  if (right === UNDATED_GROUP) return -1;
+  return left.localeCompare(right);
+}
+
+// Simplified Terac flow: finish one posted-date group before selecting tasks
+// from the next date. Within that group, pick the least-labeled unseen task
+// deterministically so all questions receive balanced coverage.
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id") ?? "";
   const supabase = getSupabaseAdmin();
 
   const { data: tasks, error } = await supabase
     .from("source_claim_tasks")
-    .select("task_id, claim, evidence_text, evidence_text_clean, evidence_url");
+    .select("task_id, claim, evidence_text, evidence_text_clean, evidence_url, posted_date");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!tasks?.length) {
     return NextResponse.json({ error: "No claim tasks have been seeded yet." }, { status: 404 });
@@ -37,16 +77,28 @@ export async function GET(req: NextRequest) {
   const totalLabelsCollected = annotations?.length ?? 0;
   const targetLabelsTotal = tasks.length * TARGET_LABELS_PER_TASK;
 
-  const underTarget = tasks.filter(
+  const underTarget = (tasks as ClaimTask[]).filter(
     (task) => (countsByTask.get(task.task_id) ?? 0) < TARGET_LABELS_PER_TASK
   );
   if (underTarget.length === 0) {
     return NextResponse.json({ error: "All questions are labeled. Thank you." }, { status: 404 });
   }
 
-  const notSeenByMe = underTarget.filter((task) => !taskIdsSeenBySession.has(task.task_id));
-  const candidates = notSeenByMe.length > 0 ? notSeenByMe : underTarget;
-  const task = candidates[Math.floor(Math.random() * candidates.length)];
+  const activeDate = [...new Set(underTarget.map((task) => dateGroup(task.posted_date)))].sort(
+    compareDateGroups
+  )[0];
+  const tasksForActiveDate = underTarget.filter(
+    (task) => dateGroup(task.posted_date) === activeDate
+  );
+  const unseenTasks = tasksForActiveDate.filter(
+    (task) => !taskIdsSeenBySession.has(task.task_id)
+  );
+  const candidates = unseenTasks.length > 0 ? unseenTasks : tasksForActiveDate;
+  const task = [...candidates].sort((left, right) => {
+    const countDifference =
+      (countsByTask.get(left.task_id) ?? 0) - (countsByTask.get(right.task_id) ?? 0);
+    return countDifference || left.task_id.localeCompare(right.task_id);
+  })[0];
 
   return NextResponse.json({
     task_id: task.task_id,

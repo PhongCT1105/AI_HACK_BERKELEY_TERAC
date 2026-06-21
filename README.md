@@ -17,8 +17,9 @@ Do not seed, show, export, or train on the original Fin-Fact labels.
 
 ## Primary routes
 
-- `/annotate` loads one least-labeled `source_claim_tasks` record through
-  `GET /api/task` and writes to `claim_annotations` through `POST /api/submit`.
+- `/annotate` uses `GET /api/task` to serve the least-labeled task from the
+  earliest posted-date group that still needs labels. It completes that date
+  group before moving to the next; records without a date are served last.
 - `/admin` shows Fin-Fact task coverage, fresh Terac label counts, verdict and
   citation distributions, and current majority labels.
 - `/api/export?password=<ADMIN_PASSWORD>` exports each claim task joined to
