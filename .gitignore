@@ -24,6 +24,7 @@ next-env.d.ts
 data/sourceguard_terac_tasks.jsonl
 data/sourceguard_terac_tasks.csv
 data/hidden_original_labels.csv
+data/demo-seeds/
 
 # Skill source repos are kept locally for reference but not committed.
 # Remove this line if you DO want them in version control.
