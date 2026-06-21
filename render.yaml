@@ -3,7 +3,6 @@ services:
     name: captain-america-finance
     runtime: node
     plan: starter
-    rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:

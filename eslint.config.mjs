@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Non-app content living alongside the Next.js app at the repo root.
+    ".claude/**",
+    "ml/**",
+    "data/**",
+    "docs/**",
+    "supabase/**",
   ]),
 ]);
 

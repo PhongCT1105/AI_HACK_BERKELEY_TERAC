@@ -3,19 +3,18 @@ node_modules/
 **/node_modules/
 
 # Python
-backend/.venv/
 **/__pycache__/
 *.pyc
 
 # Env / secrets
-.env
-.env.local
-**/.env
-**/.env.local
+.env*
+!.env.example
 
 # Next.js
-frontend/.next/
-frontend/out/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
 
 # Misc
 .DS_Store

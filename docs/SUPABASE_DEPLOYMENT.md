@@ -24,7 +24,7 @@ below.
 1. Create a Supabase project (or reuse the existing one).
 2. Run `supabase/schema.sql` in the SQL editor. It's additive/idempotent
    (`if not exists` / `add column if not exists`), safe to re-run any time.
-3. Configure these on the deployment host (see `frontend/.env.example`):
+3. Configure these on the deployment host (see `.env.example`):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`, `ADMIN_PASSWORD`, and
    optionally `TARGET_LABELS_PER_TASK` (defaults to 3).
@@ -58,7 +58,7 @@ Never upload, display, or train on the hidden-label file.
 
 ## Seed Supabase
 
-The seed script loads `frontend/.env.local` when it exists; otherwise export
+The seed script loads `.env.local` when it exists; otherwise export
 the Supabase variables in the shell. Then run:
 
     npx tsx scripts/seed_terac_tasks_to_supabase.ts
@@ -78,8 +78,8 @@ clears any labels collected against the old tasks:
 
 ## Deploy and verify
 
-1. Deploy the `frontend` directory as the Next.js app (e.g. Vercel, pointed at
-   this subdirectory) and configure the same environment variables.
+1. Deploy the repo root as the Next.js app (e.g. Vercel) and configure the
+   same environment variables.
 2. Visit `/annotate` and confirm one question loads with no login.
 3. Click Yes or No, confirm "Saved. Loading next question..." and that a new
    question loads automatically.

@@ -31,15 +31,14 @@ same primary API.
 ## Setup
 
 ```bash
-cd frontend
 npm install
-cp .env.local.example .env.local
+cp .env.example .env.local
 npm run dev
 ```
 
 Configure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
 `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, and `NEXT_PUBLIC_APP_URL` in
-`frontend/.env.local`. Run [supabase/schema.sql](supabase/schema.sql) in the
+`.env.local`. Run [supabase/schema.sql](supabase/schema.sql) in the
 Supabase SQL editor before seeding.
 
 ## Prepare and seed Fin-Fact tasks
@@ -49,7 +48,7 @@ python3 scripts/prepare_finfact_for_terac.py --input /tmp/Fin-Fact/finfact.json 
 npx tsx scripts/seed_terac_tasks_to_supabase.ts
 ```
 
-The seed script loads `frontend/.env.local` when present and upserts only the
+The seed script loads `.env.local` when present and upserts only the
 public task fields. See [docs/SUPABASE_DEPLOYMENT.md](docs/SUPABASE_DEPLOYMENT.md)
 for details and [docs/TERAC_LAUNCH.md](docs/TERAC_LAUNCH.md) for the Terac
 opportunity setup.

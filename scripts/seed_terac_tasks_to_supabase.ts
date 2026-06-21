@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 async function main() {
-  const localEnvFile = resolve(process.cwd(), "frontend/.env.local");
+  const localEnvFile = resolve(process.cwd(), ".env.local");
   if (existsSync(localEnvFile)) process.loadEnvFile(localEnvFile);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -33,7 +33,7 @@ async function main() {
     if (result.status === 404 && responseText.includes("source_claim_tasks")) {
       throw new Error(
         "Supabase is reachable, but public.source_claim_tasks is missing. Run supabase/schema.sql " +
-          "in this project's Supabase SQL Editor, then retry. Also confirm frontend/.env.local " +
+          "in this project's Supabase SQL Editor, then retry. Also confirm .env.local " +
           "points to that same Supabase project."
       );
     }
