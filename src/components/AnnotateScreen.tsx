@@ -13,6 +13,41 @@ type Task = {
 
 type Vote = "yes" | "no";
 
+type TeracParams = {
+  submissionId: string | null;
+  teracSubmissionId: string | null;
+  taskId: string | null;
+};
+
+// Terac's own host for the post-task webhook. The MCP tool docs describe the
+// path (`/api/external/callback`) but not a fixed host, so this stays
+// overridable without a code change if it's ever wrong.
+const TERAC_CALLBACK_BASE = process.env.NEXT_PUBLIC_TERAC_CALLBACK_BASE ?? "https://terac.com";
+
+function readTeracParams(): TeracParams | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const submissionId = params.get("submissionId");
+  const teracSubmissionId = params.get("teracSubmissionId");
+  const taskId = params.get("taskId");
+  // Terac always sends submissionId/teracSubmissionId for a real opportunity
+  // visit; their absence means this is an organic (non-Terac) visit.
+  if (!submissionId && !teracSubmissionId) return null;
+  return { submissionId, teracSubmissionId, taskId };
+}
+
+function buildTeracCallbackUrl(
+  params: TeracParams,
+  result: "completed" | "screened_out" | "rejected" = "completed",
+): string {
+  const url = new URL("/api/external/callback", TERAC_CALLBACK_BASE);
+  if (params.submissionId) url.searchParams.set("submissionId", params.submissionId);
+  if (params.teracSubmissionId) url.searchParams.set("teracSubmissionId", params.teracSubmissionId);
+  if (params.taskId) url.searchParams.set("taskId", params.taskId);
+  url.searchParams.set("result", result);
+  return url.toString();
+}
+
 export function AnnotateScreen() {
   const [task, setTask] = useState<Task | null>(null);
   const [reason, setReason] = useState("");
@@ -21,6 +56,9 @@ export function AnnotateScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [votedAs, setVotedAs] = useState<Vote | null>(null);
   const [sessionVotes, setSessionVotes] = useState(0);
+  // Non-null only when this visit came from a real Terac opportunity link —
+  // organic visits to /annotate keep the normal continuous labeling loop.
+  const [teracParams] = useState<TeracParams | null>(() => readTeracParams());
   const reasonRef = useRef<HTMLTextAreaElement | null>(null);
 
   const loadTask = useCallback(async () => {
@@ -76,6 +114,18 @@ export function AnnotateScreen() {
     }
     setVotedAs(canAiCite);
     setSessionVotes((count) => count + 1);
+
+    if (teracParams) {
+      // A Terac-recruited participant does exactly one task: confirm
+      // completion, then hand them back to Terac so the submission is
+      // marked done and payment can be released.
+      setStatus("Saved. Returning you to Terac…");
+      window.setTimeout(() => {
+        window.location.href = buildTeracCallbackUrl(teracParams);
+      }, 800);
+      return;
+    }
+
     setStatus("Saved.");
   }
 
